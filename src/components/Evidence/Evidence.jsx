@@ -7,22 +7,35 @@ import CardMedia from "@mui/material/CardMedia";
 import CardContent from "@mui/material/CardContent";
 import Typography from "@mui/material/Typography";
 import Chip from "@mui/material/Chip";
-import { Dialog, DialogContent } from "@mui/material";
+import { Dialog, DialogContent, DialogActions, DialogTitle} from "@mui/material";
 import CreateIcon from "@mui/icons-material/Create";
 import DeleteForeverIcon from "@mui/icons-material/DeleteForever";
 import { DateTime } from "luxon";
 import "./Evidence.css";
 import EvidenceUploadButton from "../EvidenceUploadRender/EvidenceUploadButton";
+import TextField from '@mui/material/TextField';
+import Button from '@mui/material/Button';
+
+
 
 function EvidencePage() {
   const evidence = useSelector((store) => store.evidence);
   const [selectedItem, setSelectedItem] = useState(null);
   const [detailsModalOpen, setDetailsModalOpen] = useState(false);
+  const [editItem, setEditItem] = useState(null);
+  const [isEditing, setIsEditing] = useState(false);
   const dispatch = useDispatch();
+  const [formState, setFormState] = useState({
+    user_id: '',
+    title: '',
+    notes: '',
+    location: '',
+   });
 
   useEffect(() => {
     fetchEvidence();
   }, []);
+
 
   const fetchEvidence = () => {
     axios
@@ -47,8 +60,9 @@ function EvidencePage() {
   };
 
   const editEvidence = (info) => {
+    console.log("Inside of editEvidence", info);
     axios.put(
-      `api/update/${info.id}`,)
+      `/api/evidence/update/${info.id}`, info)
       .then(() => {
         fetchEvidence()
       }).catch((error) => {
@@ -56,11 +70,42 @@ function EvidencePage() {
       })
   }
 
+  const startEdit = (item) => {
+    handleEdit(item)
+    openModal()
+  }
+
   const handleEdit = (item) => {
     // Implement edit functionality here
     console.log("Edit button was clicked", item);
-    editEvidence(item)
+    setEditItem(item);
+    setFormState({
+      id: item.id,
+       title: item.title,
+       notes: item.notes,
+      //  date_posted: DateTime.fromISO(item.date_posted).toISO(),
+       location: item.location,
+    });
+    setIsEditing(true);
+
   };
+  const handleSave = () => {
+    // Update the item in your state or backend
+    // For example, to update in state:
+    console.log("formState", formState);
+    // const updatedEvidence = evidence.map((item) =>
+    //    item.id === editItem.id ? { ...item, ...formState } : item
+    // );
+    editEvidence(formState);
+    setIsEditing(false);
+    detailsModalClose();
+   };
+
+   const handleCancel = () => {
+    setIsEditing(false)
+    detailsModalClose();
+   }
+
 
   const deleteEvidence = (itemId) => {
     axios.delete(`/api/evidence/delete/${itemId}`)
@@ -145,7 +190,7 @@ function EvidencePage() {
                     <Chip
                       icon={<CreateIcon />}
                       label="Edit"
-                      onClick={() => handleEdit(item)}
+                      onClick={() => startEdit(item)}
                     />
                     <Chip
                       icon={<DeleteForeverIcon />}
@@ -222,6 +267,58 @@ function EvidencePage() {
               </div>
             </div>
           )}
+    {isEditing && (
+    <Dialog open={isEditing} onClose={() => setIsEditing(false)}>
+    <DialogTitle>Edit Item</DialogTitle>
+    <DialogContent>
+      <TextField
+        autoFocus
+        margin="dense"
+        label="Title"
+        type="text"
+        fullWidth
+        value={formState.title}
+        onChange={(e) => setFormState({ ...formState, title: e.target.value })}
+      />
+      <TextField
+        autoFocus
+        margin="dense"
+        label="Notes"
+        type="text"
+        fullWidth
+        value={formState.notes}
+        onChange={(e) => setFormState({ ...formState, notes: e.target.value })}
+      />
+      {/* <TextField
+        autoFocus
+        margin="dense"
+        label="Date Posted"
+        type="text"
+        fullWidth
+        value={formState.date_posted}
+        onChange={(e) => setFormState({ ...formState, date_posted: e.target.value })}
+      /> */}
+      <TextField
+        autoFocus
+        margin="dense"
+        label="Location"
+        type="text"
+        fullWidth
+        value={formState.location}
+        onChange={(e) => setFormState({ ...formState, location: e.target.value })}
+      />
+      {/* Repeat for other fields */}
+    </DialogContent>
+    <DialogActions>
+      <Button onClick={() => handleCancel()} color="primary">
+        Cancel
+      </Button>
+      <Button onClick={handleSave} color="primary">
+        Save
+      </Button>
+    </DialogActions>
+  </Dialog>
+)}
         </DialogContent>
       </Dialog>
       <EvidenceUploadButton />
