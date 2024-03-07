@@ -46,8 +46,20 @@ function EvidencePage() {
     setDetailsModalOpen(false);
   };
 
+  const editEvidence = (info) => {
+    axios.put(
+      `api/update/${info.id}`,)
+      .then(() => {
+        fetchEvidence()
+      }).catch((error) => {
+        console.log("Error in the PUT", error);
+      })
+  }
+
   const handleEdit = (item) => {
     // Implement edit functionality here
+    console.log("Edit button was clicked", item);
+    editEvidence(item)
   };
 
   const deleteEvidence = (itemId) => {
